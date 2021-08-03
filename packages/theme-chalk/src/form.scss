@@ -1,6 +1,11 @@
 @import 'mixins/mixins';
 @import 'mixins/utils';
+@import 'mixins/var';
 @import 'common/var';
+
+:root {
+  @include set-component-css-var('form', $--form);
+}
 
 @include b(form) {
   @include m(label-left) {
@@ -93,8 +98,8 @@
   @include e(label) {
     flex: 0 0 auto;
     text-align: right;
-    font-size: $--form-label-font-size;
-    color: $--color-text-regular;
+    font-size: var(--el-form-label-font-size);
+    color: var(--el-text-color-regular);
     line-height: 40px;
     padding: 0 12px 0 0;
     box-sizing: border-box;
