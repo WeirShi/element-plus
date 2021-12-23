@@ -1,6 +1,6 @@
-import { Ref } from 'vue'
+import type { Ref } from 'vue'
 
-export default (el: Ref<HTMLElement>) => {
+export const useFocus = (el: Ref<HTMLElement>) => {
   return {
     focus: () => {
       el.value?.focus?.()
