@@ -1,21 +1,21 @@
 <template>
-  <el-popper
+  <el-tooltip
     ref="popper"
     v-model:visible="showPicker"
-    :effect="Effect.LIGHT"
-    manual-mode
-    trigger="click"
     :show-arrow="false"
     :fallback-placements="['bottom', 'top', 'right', 'left']"
     :offset="0"
-    transition="el-zoom-in-top"
     :gpu-acceleration="false"
-    :popper-class="`el-color-picker__panel el-color-dropdown ${popperClass}`"
+    :popper-class="[ns.be('picker', 'panel'), ns.b('dropdown'), popperClass]"
     :stop-popper-mouse-event="false"
+    effect="light"
+    trigger="click"
+    transition="el-zoom-in-top"
+    persistent
   >
-    <template #default>
+    <template #content>
       <div v-click-outside="hide">
-        <div class="el-color-dropdown__main-wrapper">
+        <div :class="ns.be('dropdown', 'main-wrapper')">
           <hue-slider ref="hue" class="hue-slider" :color="color" vertical />
           <sv-panel ref="svPanel" :color="color" />
         </div>
@@ -26,8 +26,8 @@
           :color="color"
           :colors="predefine"
         />
-        <div class="el-color-dropdown__btns">
-          <span class="el-color-dropdown__value">
+        <div :class="ns.be('dropdown', 'btns')">
+          <span :class="ns.be('dropdown', 'value')">
             <el-input
               v-model="customInput"
               :validate-event="false"
@@ -39,7 +39,7 @@
           <el-button
             size="small"
             type="text"
-            class="el-color-dropdown__link-btn"
+            :class="ns.be('dropdown', 'link-btn')"
             @click="clear"
           >
             {{ t('el.colorpicker.clear') }}
@@ -47,7 +47,7 @@
           <el-button
             plain
             size="small"
-            class="el-color-dropdown__btn"
+            :class="ns.be('dropdown', 'btn')"
             @click="confirmValue"
           >
             {{ t('el.colorpicker.confirm') }}
@@ -55,35 +55,32 @@
         </div>
       </div>
     </template>
-    <template #trigger>
+    <template #default>
       <div
         :class="[
-          'el-color-picker',
-          colorDisabled ? 'is-disabled' : '',
-          colorSize ? `el-color-picker--${colorSize}` : '',
+          ns.b('picker'),
+          ns.is('disabled', colorDisabled),
+          ns.bm('picker', colorSize),
         ]"
       >
-        <div v-if="colorDisabled" class="el-color-picker__mask"></div>
-        <div class="el-color-picker__trigger" @click="handleTrigger">
-          <span
-            class="el-color-picker__color"
-            :class="{ 'is-alpha': showAlpha }"
-          >
+        <div v-if="colorDisabled" :class="ns.be('picker', 'mask')"></div>
+        <div :class="ns.be('picker', 'trigger')" @click="handleTrigger">
+          <span :class="[ns.be('picker', 'color'), ns.is('alpha', showAlpha)]">
             <span
-              class="el-color-picker__color-inner"
+              :class="ns.be('picker', 'color-inner')"
               :style="{
                 backgroundColor: displayedColor,
               }"
             >
               <el-icon
                 v-show="modelValue || showPanelColor"
-                class="el-color-picker__icon is-icon-arrow-down"
+                :class="[ns.be('picker', 'icon'), ns.is('icon-arrow-down')]"
               >
                 <arrow-down />
               </el-icon>
               <el-icon
                 v-if="!modelValue && !showPanelColor"
-                class="el-color-picker__empty is-icon-close"
+                :class="[ns.be('picker', 'empty'), ns.is('icon-close')]"
               >
                 <close />
               </el-icon>
@@ -92,7 +89,7 @@
         </div>
       </div>
     </template>
-  </el-popper>
+  </el-tooltip>
 </template>
 
 <script lang="ts">
@@ -107,13 +104,13 @@ import {
   ref,
   watch,
 } from 'vue'
-import debounce from 'lodash/debounce'
+import { debounce } from 'lodash-unified'
 import ElButton from '@element-plus/components/button'
 import ElIcon from '@element-plus/components/icon'
 import { ClickOutside } from '@element-plus/directives'
 import { elFormItemKey, elFormKey } from '@element-plus/tokens'
-import { useLocale, useSize } from '@element-plus/hooks'
-import ElPopper, { Effect } from '@element-plus/components/popper'
+import { useLocale, useSize, useNamespace } from '@element-plus/hooks'
+import ElTooltip from '@element-plus/components/tooltip'
 import ElInput from '@element-plus/components/input'
 import { UPDATE_MODEL_EVENT } from '@element-plus/utils/constants'
 import { isValidComponentSize } from '@element-plus/utils/validators'
@@ -134,7 +131,7 @@ export default defineComponent({
   name: 'ElColorPicker',
   components: {
     ElButton,
-    ElPopper,
+    ElTooltip,
     ElInput,
     ElIcon,
     Close,
@@ -162,6 +159,7 @@ export default defineComponent({
   emits: ['change', 'active-change', UPDATE_MODEL_EVENT],
   setup(props, { emit }) {
     const { t } = useLocale()
+    const ns = useNamespace('color')
     const elForm = inject(elFormKey, {} as ElFormContext)
     const elFormItem = inject(elFormItemKey, {} as ElFormItemContext)
 
@@ -174,6 +172,7 @@ export default defineComponent({
       new Color({
         enableAlpha: props.showAlpha,
         format: props.colorFormat,
+        value: props.modelValue,
       })
     )
     const showPicker = ref(false)
@@ -188,7 +187,7 @@ export default defineComponent({
     })
     const colorSize = useSize()
     const colorDisabled = computed(() => {
-      return props.disabled || elForm.disabled
+      return !!(props.disabled || elForm.disabled)
     })
 
     const currentColor = computed(() => {
@@ -210,7 +209,6 @@ export default defineComponent({
       (val) => {
         customInput.value = val
         emit('active-change', val)
-        // showPanelColor.value = true
       }
     )
 
@@ -276,8 +274,8 @@ export default defineComponent({
         const newColor = new Color({
           enableAlpha: props.showAlpha,
           format: props.colorFormat,
+          value: props.modelValue,
         })
-        newColor.fromString(props.modelValue)
         if (!color.compare(newColor)) {
           resetColor()
         }
@@ -296,7 +294,6 @@ export default defineComponent({
 
     onMounted(() => {
       if (props.modelValue) {
-        color.fromString(props.modelValue)
         customInput.value = currentColor.value
       }
     })
@@ -316,7 +313,6 @@ export default defineComponent({
     })
 
     return {
-      Effect,
       color: color as Color,
       colorDisabled,
       colorSize,
@@ -330,6 +326,7 @@ export default defineComponent({
       clear,
       confirmValue,
       t,
+      ns,
       hue,
       svPanel,
       alpha,

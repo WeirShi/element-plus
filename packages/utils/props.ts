@@ -1,13 +1,13 @@
 import { warn } from 'vue'
 import { isObject } from '@vue/shared'
-import fromPairs from 'lodash/fromPairs'
+import { fromPairs } from 'lodash-unified'
 import type { ExtractPropTypes, PropType } from '@vue/runtime-core'
 import type { Mutable } from './types'
 
 const wrapperKey = Symbol()
 export type PropWrapper<T> = { [wrapperKey]: T }
 
-export const propKey = Symbol()
+export const propKey = '__elPropsReservedKey'
 
 type ResolveProp<T> = ExtractPropTypes<{
   key: { type: T; required: true }
